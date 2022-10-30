@@ -1,6 +1,10 @@
 const { join } = require("path");
 const { readdir, lstat, readFile } = require("fs");
 const { promisify } = require("util");
+// var stats = fs.statSync("myfile.txt");
+// var fileSizeInBytes = stats.size;
+// // Convert the file size to megabytes (optional)
+// var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
 
 const asyncReaddir = promisify(readdir);
 const asyncLstat = promisify(lstat);
@@ -8,7 +12,7 @@ const asyncReadFile = promisify(readFile);
 
 async function readNestedDir(dir, filter) {
   const files = [];
-  await traverseDir(dir, (file) => files.push(file), filter);
+  await traverseDir(dir, (file, size) => files.push({ file, size }), filter);
   return files;
 }
 
@@ -17,12 +21,13 @@ async function traverseDir(dir, callback, filter) {
 
   for (const file of files) {
     const fullPath = join(dir, file);
-    const isDir = (await asyncLstat(fullPath)).isDirectory();
+    const lStat = await asyncLstat(fullPath);
+    const isDir = lStat.isDirectory();
 
     if (isDir) {
       await traverseDir(fullPath, callback, filter);
     } else if (filter?.test(fullPath) || !filter) {
-      callback(fullPath);
+      callback(fullPath, lStat.size);
     }
   }
 }

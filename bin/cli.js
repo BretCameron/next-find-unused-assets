@@ -9,14 +9,23 @@ const asyncUnlink = promisify(unlink);
 
 async function isAssetFound(asset, buildFiles) {
   for (const buildFile of buildFiles) {
-    const searchTerm = asset?.match(/[^\/]+$/)?.[0] || "";
+    const searchTerm = asset?.file.match(/[^\/]+$/)?.[0] || "";
 
-    if (await isFoundInFile(searchTerm, buildFile)) {
+    if (await isFoundInFile(searchTerm, buildFile.file)) {
       return true;
     }
   }
 
   return false;
+}
+
+function humanFileSize(size) {
+  const i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+  return (
+    (size / Math.pow(1024, i)).toFixed(2) * 1 +
+    " " +
+    ["B", "kB", "MB", "GB", "TB"][i]
+  );
 }
 
 async function run() {
@@ -27,24 +36,34 @@ async function run() {
   const dryRun = !!argv["dry-run"];
 
   const [assets, buildFiles] = await Promise.all([
-    readNestedDir(publicDir, /\.jpg$/),
+    readNestedDir(publicDir, /\.(jpg|jpeg|png|gif|webp)$/),
     readNestedDir(buildDir, /\.js$/),
   ]);
+
+  let totalUsedSize = 0;
+  let totalUnusedSize = 0;
 
   for (const asset of assets) {
     const isFound = await isAssetFound(asset, buildFiles);
 
     if (!isFound) {
+      totalUnusedSize += asset.size;
+
       if (dryRun) {
-        log(`Unused:  ${asset.replace(/^.*public\//, "")}`, "red");
+        log(`Unused:  ${asset.file.replace(/^.*public\//, "")}`, "red");
       } else {
-        log(`Deleting asset: ${asset.replace(/^.*public\//, "")}`, "red");
-        await asyncUnlink(asset);
+        log(`Deleting asset: ${asset.file.replace(/^.*public\//, "")}`, "red");
+        await asyncUnlink(asset.file);
       }
     } else {
-      log(`  Used:  ${asset.replace(/^.*public\//, "")}`, "cyan");
+      totalUsedSize += asset.size;
+      log(`  Used:  ${asset.file.replace(/^.*public\//, "")}`, "cyan");
     }
   }
+
+  console.log(``);
+  console.log(`  Total used size: ${humanFileSize(totalUsedSize)}`);
+  console.log(`Total unused size: ${humanFileSize(totalUnusedSize)}`);
 
   process.exit(0);
 }
