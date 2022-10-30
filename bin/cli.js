@@ -1,3 +1,9 @@
+/**
+ * TODO
+ *  - add ability to specify file extensions
+ *  - add ability to exclude files
+ */
+
 const yargs = require("yargs");
 const { hideBin } = require("yargs/helpers");
 const { readNestedDir, isFoundInFile } = require("./helpers");
@@ -40,6 +46,8 @@ async function run() {
     readNestedDir(buildDir, /\.js$/),
   ]);
 
+  let totalUsed = 0;
+  let totalUnused = 0;
   let totalUsedSize = 0;
   let totalUnusedSize = 0;
 
@@ -47,6 +55,7 @@ async function run() {
     const isFound = await isAssetFound(asset, buildFiles);
 
     if (!isFound) {
+      totalUnused++;
       totalUnusedSize += asset.size;
 
       if (dryRun) {
@@ -56,14 +65,19 @@ async function run() {
         await asyncUnlink(asset.file);
       }
     } else {
+      totalUsed++;
       totalUsedSize += asset.size;
       log(`  Used:  ${asset.file.replace(/^.*public\//, "")}`, "cyan");
     }
   }
 
   console.log(``);
-  console.log(`  Total used size: ${humanFileSize(totalUsedSize)}`);
-  console.log(`Total unused size: ${humanFileSize(totalUnusedSize)}`);
+  console.log(
+    `  Total used assets: ${totalUsed} (${humanFileSize(totalUsedSize)})`
+  );
+  console.log(
+    `Total unused assets: ${totalUnused} (${humanFileSize(totalUnusedSize)})`
+  );
 
   process.exit(0);
 }
