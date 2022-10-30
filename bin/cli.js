@@ -59,15 +59,15 @@ async function run() {
       totalUnusedSize += asset.size;
 
       if (dryRun) {
-        log(`Unused:  ${asset.file.replace(/^.*public\//, "")}`, "red");
+        log(`Unused:  ${asset.file}`, "red");
       } else {
-        log(`Deleting asset: ${asset.file.replace(/^.*public\//, "")}`, "red");
+        log(`Deleting asset: ${asset.file}`, "red");
         await asyncUnlink(asset.file);
       }
     } else {
       totalUsed++;
       totalUsedSize += asset.size;
-      log(`  Used:  ${asset.file.replace(/^.*public\//, "")}`, "cyan");
+      log(`  Used:  ${asset.file}`, "cyan");
     }
   }
 
