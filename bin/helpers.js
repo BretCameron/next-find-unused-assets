@@ -1,10 +1,6 @@
 const { join } = require("path");
 const { readdir, lstat, readFile } = require("fs");
 const { promisify } = require("util");
-// var stats = fs.statSync("myfile.txt");
-// var fileSizeInBytes = stats.size;
-// // Convert the file size to megabytes (optional)
-// var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
 
 const asyncReaddir = promisify(readdir);
 const asyncLstat = promisify(lstat);
